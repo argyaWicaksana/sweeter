@@ -49,6 +49,11 @@ def api_register():
     pw_receive = request.form["pw_give"]
     nickname_receive = request.form["nickname_give"]
 
+    is_id_unique = db.user.find_one({"id": id_receive})
+
+    if is_id_unique is not None:
+        return jsonify({"msg": f"An account with id {id_receive} already exists. Please try another id!"})
+
     pw_hash = hashlib.sha256(pw_receive.encode("utf-8")).hexdigest()
 
     db.user.insert_one({"id": id_receive, "pw": pw_hash, "nick": nickname_receive})
