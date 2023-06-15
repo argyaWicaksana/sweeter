@@ -3,26 +3,26 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css" />
     <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" />
-    <title>Home | Sweeter</title>
+    <title>{{ user_info.name }} | Sweeter</title>
 </head>
 
 <body>
-    <p>index page</p>
-
+    {% if status %}
+    My Profile Page
+    {% else %}
+    Some other user's profile page
+    {% endif %}
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.js"></script>
     <script>
-        // Untuk logout, anda hanya tinggal
-        // menghapus token anda dari cookies browser anda
-        function logout() {
-            $.removeCookie('mytoken');
-            alert('You have been logged out!')
-            window.location.href = '/login'
+        function sign_out() {
+            $.removeCookie("mytoken", { path: "/" });
+            alert("Logged out!");
+            window.location.href = "/login";
         }
     </script>
 </body>

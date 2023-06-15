@@ -37,28 +37,21 @@ def login():
     msg = request.args.get("msg")
     return render_template("login.jinja2", msg=msg)
 
+@app.route("/user/<username>")
+def user(username):
+    # an endpoint for retrieving a user's profile information
+    # and all of their posts
+    token_receive = request.cookies.get("mytoken")
+    try:
+        payload = jwt.decode(token_receive, SECRET_KEY, algorithms=["HS256"])
+        # if this is my own profile, True
+        # if this is somebody else's profile, False
+        status = username == payload["id"]  
 
-@app.route("/register")
-def register():
-    return render_template("register.jinja2")
-
-
-@app.route("/api/register", methods=["POST"])
-def api_register():
-    id_receive = request.form["id_give"]
-    pw_receive = request.form["pw_give"]
-    nickname_receive = request.form["nickname_give"]
-
-    is_id_unique = db.user.find_one({"id": id_receive})
-
-    if is_id_unique is not None:
-        return jsonify({"msg": f"An account with id {id_receive} already exists. Please try another id!"})
-
-    pw_hash = hashlib.sha256(pw_receive.encode("utf-8")).hexdigest()
-
-    db.user.insert_one({"id": id_receive, "pw": pw_hash, "nick": nickname_receive})
-
-    return jsonify({"result": "success"})
+        user_info = db.users.find_one({"id": username}, {"_id": False})
+        return render_template("user.jinja2", user_info=user_info, status=status)
+    except (jwt.ExpiredSignatureError, jwt.exceptions.DecodeError):
+        return redirect(url_for("home"))
 
 
 @app.route("/api/login", methods=["POST"])
@@ -84,38 +77,88 @@ def api_login():
         )
 
 
-# [Endpoint API verifikasi informasi user]
-# Ini merupakan endpoint API yang hanya bisa
-# menerima request dari user terotentikasi
-# Anda hanya perlu memasukkan token yang valid
-# pada request anda untuk mendapatkan akses ke
-# Endpoint API ini. Sistem ini wajar karena
-# beberapa informasi sebaiknya private untuk setiap user
-# (contoh. shopping cart atau data akun user)
-@app.route("/api/nick", methods=["GET"])
-def api_valid():
+@app.route("/api/register", methods=["POST"])
+def api_register():
+    id_receive = request.form["id_give"]
+    pw_receive = request.form["pw_give"]
+    nickname_receive = request.form["nickname_give"]
+
+    is_id_unique = db.user.find_one({"id": id_receive})
+
+    if is_id_unique is not None:
+        return jsonify({"msg": f"An account with id {id_receive} already exists. Please try another id!"})
+
+    pw_hash = hashlib.sha256(pw_receive.encode("utf-8")).hexdigest()
+
+    db.user.insert_one({"id": id_receive, "pw": pw_hash, "nick": nickname_receive})
+
+    return jsonify({"result": "success"})
+
+
+@app.route("/update_profile", methods=["POST"])
+def save_img():
     token_receive = request.cookies.get("mytoken")
-
     try:
-        # kita akan coba decode tokennya dengan kunci rahasia
         payload = jwt.decode(token_receive, SECRET_KEY, algorithms=["HS256"])
-        print(payload)
+        # WKita update profil user disini
+        return jsonify({"result": "success", "msg": "Your profile has been updated"})
+    except (jwt.ExpiredSignatureError, jwt.exceptions.DecodeError):
+        return redirect(url_for("home"))
 
-        # payload terdekripsinya seharusnya berisi id user
-        # kita bisa menggunakan id ini untuk mencari data user
-        # dari database dan mengembalikannya ke user
-        userinfo = db.user.find_one({"id": payload["id"]}, {"_id": 0})
-        return jsonify({"result": "success", "nickname": userinfo["nick"]})
+
+@app.route("/posting", methods=["POST"])
+def posting():
+    token_receive = request.cookies.get("mytoken")
+    try:
+        payload = jwt.decode(token_receive, SECRET_KEY, algorithms=["HS256"])
+        # Kita buat  post baru disini
+        return jsonify({"result": "success", "msg": "Posting successful!"})
+    except (jwt.ExpiredSignatureError, jwt.exceptions.DecodeError):
+        return redirect(url_for("home"))
+
+
+@app.route("/get_posts", methods=["GET"])
+def get_posts():
+    token_receive = request.cookies.get("mytoken")
+    try:
+        payload = jwt.decode(token_receive, SECRET_KEY, algorithms=["HS256"])
+        # Kita mengambil daftar lengkap post disini
+        return jsonify({"result": "success", "msg": "Successful fetched all posts"})
+    except (jwt.ExpiredSignatureError, jwt.exceptions.DecodeError):
+        return redirect(url_for("home"))
+
+
+@app.route("/update_like", methods=["POST"])
+def update_like():
+    token_receive = request.cookies.get("mytoken")
+    try:
+        payload = jwt.decode(token_receive, SECRET_KEY, algorithms=["HS256"])
+        # Kita mengganti hitungan like suatu post disini
+        return jsonify({"result": "success", "msg": "updated"})
+    except (jwt.ExpiredSignatureError, jwt.exceptions.DecodeError):
+        return redirect(url_for("home"))
+
+
+@app.route("/register")
+def register():
+    return render_template("register.jinja2")
+
+
+@app.route("/about")
+def about():
+    return render_template("about.jinja2")
+
+
+@app.route("/secret")
+def secret():
+    token_receive = request.cookies.get("mytoken")
+    try:
+        # payload = jwt.decode(token_receive, SECRET_KEY, algorithms=["HS256"])
+        return render_template("secret.jinja2")
     except jwt.ExpiredSignatureError:
-        # jika anda mencoba untuk mendekripsi token yang sudah expired
-        # anda akan mendapatkan error khusus, kita menangani error nya disini
-        return jsonify({"result": "fail", "msg": "Your token has expired"})
+        return redirect(url_for("login", msg="Your login token has expired"))
     except jwt.exceptions.DecodeError:
-        # jika ada permasalahan lain ketika proses decoding,
-        # kita akan tangani di sini
-        return jsonify(
-            {"result": "fail", "msg": "There was an error while logging you in"}
-        )
+        return redirect(url_for("login", msg="There was an issue logging you in"))
 
 
 if __name__ == "__main__":

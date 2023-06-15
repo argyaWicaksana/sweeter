@@ -6,7 +6,8 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css" />
-    <title>Login</title>
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" />
+    <title>Login | Sweeter</title>
 </head>
 
 <body>
@@ -46,43 +47,46 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.js"></script>
 
     <script>
-        {% if msg %}
-        alert("{{ msg }}")
-        {% endif %}
-        // Mari belajar sedikit tentang apa itu cookie browser
-
-        // Untuk melacak user yang sudah log in,
-        // developer biasanya menggunakan cookie browser untuk 
-        // menahan token user diantara beberapa request
-
-        // anda bisa membayangkan cookie seperti dictionary
-        // python (pasangan key value) tetapi cookie
-        // diciptakan untuk browser
-
-        // anda memiliki kontrol kapan dan bagaimana menghapus
-        // cookie browser ketika browser anda ditutup
+        // {% if msg %}
+        //     alert("{{ msg }}")
+        // {% endif %}
         function login() {
             $.ajax({
                 type: "POST",
                 url: "/api/login",
                 data: { id_give: $('#userid').val(), pw_give: $('#userpw').val() },
                 success: function (response) {
-                    if (response['result'] === 'success') {
-                        // If the login process is successful,
-                        // we receive a JWT token from the
-                        // server, and then save that token
-                        // in our browser cookies
-                        $.cookie('mytoken', response['token']);
+                    if (response["result"] == "success") {
+                        $.cookie("mytoken", response["token"], { path: "/" });
 
-                        alert('Login complete!')
-                        window.location.href = '/'
+                        alert("Login complete!");
+                        window.location.href = "/";
                     } else {
-                        // If the login process is unsuccessful,
-                        // show the user an error message
-                        alert(response['msg'])
+                        // If something goes wrong in the login
+                        // process, alert the user of the error
+                        alert(response["msg"]);
                     }
-                }
-            })
+                },
+            });
+        }
+
+        function register() {
+            let username = "";
+            let password = "";
+            let password2 = "";
+
+            $.ajax({
+                type: "POST",
+                url: "/api/register",
+                data: {
+                    id_give: username,
+                    pw_give: password,
+                },
+                success: function (response) {
+                    alert("You are registered! Nice!");
+                    window.location.replace("/login");
+                },
+            });
         }
     </script>
 </body>
