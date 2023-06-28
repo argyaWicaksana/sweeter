@@ -20,6 +20,17 @@ SECRET_KEY = os.environ.get("SECRET_KEY")
 client = MongoClient(MONGODB_URI)
 db = client[DB_NAME]
 
+def count_icon(post, payload, type):
+    post[f"count_{type}"] = db.likes.count_documents(
+        {"post_id": post["_id"], "type": type}
+    )
+    post[f"{type}_by_me"] = bool(
+        db.likes.find_one(
+            {"post_id": post["_id"], "type": type, "username": payload["id"]}
+        )
+    )
+    return post
+
 
 @app.route("/")
 def home():
@@ -198,14 +209,17 @@ def get_posts():
 
         for post in posts:
             post["_id"] = str(post["_id"])
-            post["count_heart"] = db.likes.count_documents(
-                {"post_id": post["_id"], "type": "heart"}
-            )
-            post["heart_by_me"] = bool(
-                db.likes.find_one(
-                    {"post_id": post["_id"], "type": "heart", "username": payload["id"]}
-                )
-            )
+            post = count_icon(post, payload, 'heart')
+            post = count_icon(post, payload, 'star')
+            post = count_icon(post, payload, 'thumbs-up')
+            # post["count_heart"] = db.likes.count_documents(
+            #     {"post_id": post["_id"], "type": "heart"}
+            # )
+            # post["heart_by_me"] = bool(
+            #     db.likes.find_one(
+            #         {"post_id": post["_id"], "type": "heart", "username": payload["id"]}
+            #     )
+            # )
 
         return jsonify(
             {"result": "success", "msg": "Successful fetched all posts", "posts": posts}
